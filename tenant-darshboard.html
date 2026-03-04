@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RentTrust — Tenant Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0a0a0f; --paper: #f5f2eb; --gold: #c8a84b; --gold-light: #e8d08a;
+    --green: #1a5c3a; --green-mid: #2d7a52; --green-light: #4aab73;
+    --cream: #faf8f2; --muted: #6b6860; --border: #d8d3c8; --sidebar: #0d1a12;
+    --success: #27ae60; --warning: #f39c12; --danger: #e74c3c;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #f0ede6; color: var(--ink); display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px; background: var(--sidebar); color: white; flex-shrink: 0;
+    display: flex; flex-direction: column; padding: 2rem 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto;
+  }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; padding: 0 1.5rem; margin-bottom: 2.5rem; }
+  .sidebar-logo span { color: var(--gold); }
+  .sidebar-section { padding: 0 1rem; margin-bottom: 0.5rem; }
+  .sidebar-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.3); padding: 0 0.5rem; margin-bottom: 0.4rem; }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.8rem;
+    border-radius: 10px; cursor: pointer; transition: all 0.2s; text-decoration: none;
+    color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 0.15rem;
+  }
+  .sidebar-link:hover { background: rgba(255,255,255,0.07); color: white; }
+  .sidebar-link.active { background: rgba(26,92,58,0.5); color: white; font-weight: 600; }
+  .sidebar-icon { width: 20px; text-align: center; font-size: 1rem; }
+  .sidebar-bottom { margin-top: auto; padding: 1rem; border-top: 1px solid rgba(255,255,255,0.08); }
+  .user-mini { display: flex; align-items: center; gap: 0.8rem; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--green-light), var(--green)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; }
+  .user-mini-name { font-size: 0.88rem; font-weight: 600; color: white; }
+  .user-mini-role { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+
+  /* MAIN */
+  .main { margin-left: 260px; flex: 1; padding: 2rem 2.5rem; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+  .topbar-right { display: flex; align-items: center; gap: 1rem; }
+  .notif-btn { position: relative; width: 38px; height: 38px; border-radius: 10px; background: white; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid white; }
+  .topbar-avatar { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--green-light), var(--green)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+
+  /* SCORE HERO */
+  .score-hero {
+    background: linear-gradient(135deg, var(--green) 0%, #0f3d26 100%);
+    border-radius: 20px; padding: 2rem 2.5rem; color: white; margin-bottom: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .score-hero::before {
+    content: ''; position: absolute; right: -60px; top: -60px;
+    width: 250px; height: 250px; border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .score-hero::after {
+    content: ''; position: absolute; right: 100px; bottom: -80px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(200,168,75,0.08);
+  }
+  .score-left h2 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 0.5rem; }
+  .score-number { font-family: 'Syne', sans-serif; font-size: 4rem; font-weight: 800; line-height: 1; color: var(--gold-light); }
+  .score-label { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 0.3rem; }
+  .score-change { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--gold-light); margin-top: 0.4rem; }
+  .score-right { position: relative; z-index: 1; }
+  .score-ring { position: relative; width: 120px; height: 120px; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+  .score-ring-pct { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; }
+  .score-ring-label { font-size: 0.65rem; color: rgba(255,255,255,0.6); }
+  .score-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.2rem; }
+  .s-badge { padding: 0.25rem 0.7rem; border-radius: 50px; font-size: 0.72rem; font-weight: 600; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
+  .s-badge-gold { background: rgba(200,168,75,0.25); color: var(--gold-light); }
+
+  /* STAT CARDS */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: white; border-radius: 16px; padding: 1.3rem; border: 1px solid var(--border); }
+  .stat-card-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .stat-card-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+  .stat-card-value { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .stat-card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+  .stat-up { color: var(--success); }
+  .stat-down { color: var(--danger); }
+
+  /* GRID */
+  .content-grid { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; }
+  .card { background: white; border-radius: 16px; border: 1px solid var(--border); }
+  .card-header { padding: 1.3rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+  .card-action { font-size: 0.8rem; color: var(--green); cursor: pointer; text-decoration: none; font-weight: 600; }
+  .card-body { padding: 1.5rem; }
+
+  /* PAYMENT TABLE */
+  .payment-row { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 0; border-bottom: 1px solid #f0ede6; }
+  .payment-row:last-child { border-bottom: none; }
+  .pay-left { display: flex; align-items: center; gap: 0.9rem; }
+  .pay-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+  .pay-icon-rent { background: rgba(26,92,58,0.1); }
+  .pay-icon-deposit { background: rgba(200,168,75,0.12); }
+  .pay-icon-util { background: rgba(52,152,219,0.1); }
+  .pay-name { font-size: 0.88rem; font-weight: 600; }
+  .pay-date { font-size: 0.75rem; color: var(--muted); }
+  .pay-right { text-align: right; }
+  .pay-amount { font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; }
+  .pay-status { font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 50px; font-weight: 600; }
+  .status-paid { background: rgba(39,174,96,0.1); color: var(--success); }
+  .status-upcoming { background: rgba(243,156,18,0.1); color: var(--warning); }
+  .status-overdue { background: rgba(231,76,60,0.1); color: var(--danger); }
+
+  /* NEXT PAYMENT */
+  .next-pay {
+    background: linear-gradient(135deg, #fffbf0, #fff8e8);
+    border: 1.5px solid rgba(200,168,75,0.3); border-radius: 14px;
+    padding: 1.3rem; margin-bottom: 1.2rem;
+  }
+  .next-pay-label { font-size: 0.75rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .next-pay-amount { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.2rem; }
+  .next-pay-due { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; }
+  .pay-btn { width: 100%; padding: 0.75rem; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .pay-btn:hover { background: var(--green-mid); }
+
+  /* ISSUES */
+  .issue-row { display: flex; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid #f0ede6; align-items: flex-start; }
+  .issue-row:last-child { border-bottom: none; }
+  .issue-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .issue-dot-open { background: var(--warning); }
+  .issue-dot-resolved { background: var(--success); }
+  .issue-title { font-size: 0.87rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .issue-meta { font-size: 0.75rem; color: var(--muted); }
+
+  /* SIDEBAR PANEL */
+  .side-col { display: flex; flex-direction: column; gap: 1.5rem; }
+  .landlord-card { padding: 1.5rem; }
+  .l-avatar { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--gold), #8a7020); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.1rem; margin-bottom: 1rem; }
+  .l-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+  .l-role { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.8rem; }
+  .l-score { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+  .l-score-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .l-score-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--gold)); border-radius: 3px; }
+  .l-score-num { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--green); }
+  .contact-btns { display: flex; gap: 0.6rem; }
+  .contact-btn { flex: 1; padding: 0.55rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; background: transparent; transition: all 0.2s; }
+  .contact-btn:hover { border-color: var(--green); color: var(--green); }
+  .contact-btn-primary { background: var(--green); color: white; border-color: var(--green); }
+  .contact-btn-primary:hover { background: var(--green-mid); }
+
+  .quick-actions { display: flex; flex-direction: column; gap: 0.6rem; }
+  .quick-action { display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 1rem; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--border); background: white; font-size: 0.87rem; font-weight: 500; transition: all 0.2s; }
+  .quick-action:hover { border-color: var(--green); color: var(--green); }
+  .qa-icon { font-size: 1.1rem; }
+
+  @media (max-width: 1200px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 900px) { .content-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.5rem; } }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">Rent<span>Trust</span></div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Menu</div>
+    <a href="tenant-dashboard.html" class="sidebar-link active"><span class="sidebar-icon">🏠</span> Dashboard</a>
+    <a href="profile.html" class="sidebar-link"><span class="sidebar-icon">👤</span> My Profile</a>
+    <a href="#" class="sidebar-link"><span class="sidebar-icon">💳</span> Payments</a>
+    <a href="#" class="sidebar-link"><span class="sidebar-icon">📄</span> Lease</a>
+    <a href="dispute.html" class="sidebar-link"><span class="sidebar-icon">⚖️</span> Disputes</a>
+    <a href="#" class="sidebar-link"><span class="sidebar-icon">🛠</span> Maintenance</a>
+  </div>
+  <div class="sidebar-section" style="margin-top:1rem">
+    <div class="sidebar-label">Account</div>
+    <a href="#" class="sidebar-link"><span class="sidebar-icon">⚙️</span> Settings</a>
+    <a href="#" class="sidebar-link"><span class="sidebar-icon">❓</span> Help</a>
+    <a href="login.html" class="sidebar-link"><span class="sidebar-icon">🚪</span> Sign Out</a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-mini">
+      <div class="user-avatar">AW</div>
+      <div>
+        <div class="user-mini-name">Amina Wanjiru</div>
+        <div class="user-mini-role">Tenant · Verified ✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Good morning, Amina 👋</div>
+      <div style="font-size:0.85rem;color:var(--muted)">Here's your rental overview for December 2024</div>
+    </div>
+    <div class="topbar-right">
+      <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+      <div class="topbar-avatar">AW</div>
+    </div>
+  </div>
+
+  <!-- TRUST SCORE HERO -->
+  <div class="score-hero">
+    <div class="score-left">
+      <h2>Your Rental Trust Score</h2>
+      <div class="score-number">920</div>
+      <div class="score-label">Excellent · Top 8% of tenants</div>
+      <div class="score-change">↑ +15 pts this month</div>
+      <div class="score-badges">
+        <span class="s-badge s-badge-gold">⭐ On-time Payer</span>
+        <span class="s-badge">✓ ID Verified</span>
+        <span class="s-badge">📋 3yr History</span>
+        <span class="s-badge">🏆 No Disputes</span>
+      </div>
+    </div>
+    <div class="score-right">
+      <div class="score-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="314" stroke-dashoffset="31"/>
+          <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#4aab73"/>
+              <stop offset="100%" style="stop-color:#c8a84b"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-ring-text">
+          <div class="score-ring-pct">92%</div>
+          <div class="score-ring-label">Trust Level</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-card-icon">💰</div>
+      <div class="stat-card-label">Next Rent Due</div>
+      <div class="stat-card-value">Ksh 18,500</div>
+      <div class="stat-card-sub" style="color:var(--warning)">⏱ Due in 12 days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">✅</div>
+      <div class="stat-card-label">On-time Payments</div>
+      <div class="stat-card-value">36/36</div>
+      <div class="stat-card-sub stat-up">↑ 100% streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">🏦</div>
+      <div class="stat-card-label">Deposit Held</div>
+      <div class="stat-card-value">Ksh 37,000</div>
+      <div class="stat-card-sub">2 months · Tracked</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon">🛠</div>
+      <div class="stat-card-label">Open Issues</div>
+      <div class="stat-card-value">2</div>
+      <div class="stat-card-sub stat-down">1 awaiting response</div>
+    </div>
+  </div>
+
+  <!-- CONTENT GRID -->
+  <div class="content-grid">
+    <div>
+      <!-- PAYMENT HISTORY -->
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header">
+          <div class="card-title">Payment History</div>
+          <a href="#" class="card-action">View all →</a>
+        </div>
+        <div class="card-body">
+          <div class="payment-row">
+            <div class="pay-left">
+              <div class="pay-icon pay-icon-rent">🏠</div>
+              <div><div class="pay-name">December Rent — Apt 4B</div><div class="pay-date">Dec 1, 2024 · M-Pesa · #RT-2024-8841</div></div>
+            </div>
+            <div class="pay-right"><div class="pay-amount">Ksh 18,500</div><span class="pay-status status-paid">Paid</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-left">
+              <div class="pay-icon pay-icon-rent">🏠</div>
+              <div><div class="pay-name">November Rent — Apt 4B</div><div class="pay-date">Nov 1, 2024 · M-Pesa · #RT-2024-7210</div></div>
+            </div>
+            <div class="pay-right"><div class="pay-amount">Ksh 18,500</div><span class="pay-status status-paid">Paid</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-left">
+              <div class="pay-icon pay-icon-util">⚡</div>
+              <div><div class="pay-name">Water Bill — November</div><div class="pay-date">Nov 15, 2024 · Bank · #RT-2024-7890</div></div>
+            </div>
+            <div class="pay-right"><div class="pay-amount">Ksh 1,200</div><span class="pay-status status-paid">Paid</span></div>
+          </div>
+          <div class="payment-row">
+            <div class="pay-left">
+              <div class="pay-icon pay-icon-rent">🏠</div>
+              <div><div class="pay-name">January Rent — Apt 4B</div><div class="pay-date">Due Jan 1, 2025</div></div>
+            </div>
+            <div class="pay-right"><div class="pay-amount">Ksh 18,500</div><span class="pay-status status-upcoming">Upcoming</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAINTENANCE ISSUES -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Maintenance Issues</div>
+          <a href="dispute.html" class="card-action">+ Report Issue</a>
+        </div>
+        <div class="card-body">
+          <div class="issue-row">
+            <div class="issue-dot issue-dot-open"></div>
+            <div>
+              <div class="issue-title">Kitchen tap leaking</div>
+              <div class="issue-meta">Reported Dec 3 · Awaiting landlord response</div>
+            </div>
+          </div>
+          <div class="issue-row">
+            <div class="issue-dot issue-dot-open"></div>
+            <div>
+              <div class="issue-title">Broken window latch — Bedroom</div>
+              <div class="issue-meta">Reported Nov 28 · Landlord acknowledged</div>
+            </div>
+          </div>
+          <div class="issue-row">
+            <div class="issue-dot issue-dot-resolved"></div>
+            <div>
+              <div class="issue-title">Electrical fault in hallway</div>
+              <div class="issue-meta">Resolved Nov 10 · Repaired by landlord ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE COLUMN -->
+    <div class="side-col">
+      <!-- NEXT PAYMENT -->
+      <div class="card card-body">
+        <div class="next-pay">
+          <div class="next-pay-label">Next Payment Due</div>
+          <div class="next-pay-amount">Ksh 18,500</div>
+          <div class="next-pay-due">January Rent · Due Jan 1, 2025 · 12 days away</div>
+          <button class="pay-btn">Pay via M-Pesa →</button>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted);text-align:center">Payments logged automatically · Receipt issued instantly</div>
+      </div>
+
+      <!-- LANDLORD INFO -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Your Landlord</div></div>
+        <div class="landlord-card">
+          <div class="l-avatar">JK</div>
+          <div class="l-name">James Kamau</div>
+          <div class="l-role">Landlord · Kasarani Properties Ltd</div>
+          <div class="l-score">
+            <div class="l-score-bar"><div class="l-score-fill" style="width:82%"></div></div>
+            <div class="l-score-num">820</div>
+          </div>
+          <div style="color:var(--gold);font-size:0.85rem;margin-bottom:1rem">★★★★☆ &nbsp;<span style="color:var(--muted);font-size:0.78rem">4.1 / 5</span></div>
+          <div class="contact-btns">
+            <button class="contact-btn">📞 Call</button>
+            <button class="contact-btn">💬 Message</button>
+            <button class="contact-btn contact-btn-primary">View Profile</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Quick Actions</div></div>
+        <div class="card-body">
+          <div class="quick-actions">
+            <div class="quick-action" onclick="window.location.href='profile.html'"><span class="qa-icon">📋</span> Download Rental Record</div>
+            <div class="quick-action"><span class="qa-icon">🔍</span> Request Lease Copy</div>
+            <div class="quick-action" onclick="window.location.href='dispute.html'"><span class="qa-icon">⚖️</span> File a Dispute</div>
+            <div class="quick-action"><span class="qa-icon">🏦</span> Track My Deposit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

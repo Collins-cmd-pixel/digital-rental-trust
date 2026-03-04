@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RentTrust — Rental Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0a0a0f; --paper: #f5f2eb; --gold: #c8a84b; --gold-light: #e8d08a;
+    --green: #1a5c3a; --green-mid: #2d7a52; --green-light: #4aab73;
+    --cream: #faf8f2; --muted: #6b6860; --border: #d8d3c8; --sidebar: #0d1a12;
+    --success: #27ae60; --warning: #f39c12;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #f0ede6; color: var(--ink); display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px; background: var(--sidebar); color: white; flex-shrink: 0;
+    display: flex; flex-direction: column; padding: 2rem 0; position: fixed; top: 0; left: 0; bottom: 0;
+  }
+  .sidebar-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; padding: 0 1.5rem; margin-bottom: 2.5rem; }
+  .sidebar-logo span { color: var(--gold); }
+  .sidebar-link { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1.5rem; cursor: pointer; transition: all 0.2s; text-decoration: none; color: rgba(255,255,255,0.6); font-size: 0.9rem; margin: 0 0.5rem 0.1rem; border-radius: 10px; }
+  .sidebar-link:hover { background: rgba(255,255,255,0.07); color: white; }
+  .sidebar-link.active { background: rgba(26,92,58,0.5); color: white; font-weight: 600; }
+  .sidebar-icon { width: 20px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+  .user-mini { display: flex; align-items: center; gap: 0.8rem; }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--green-light), var(--green)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+  .user-mini-name { font-size: 0.88rem; font-weight: 600; color: white; }
+  .user-mini-role { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+
+  .main { margin-left: 260px; flex: 1; padding: 2rem 2.5rem; max-width: 1100px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+  .back-btn { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.88rem; cursor: pointer; text-decoration: none; transition: color 0.2s; }
+  .back-btn:hover { color: var(--ink); }
+  .topbar-actions { display: flex; gap: 0.8rem; }
+  .btn-sm { padding: 0.6rem 1.2rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; border: none; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; }
+  .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--ink); }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-primary:hover { background: var(--green-mid); }
+
+  /* PROFILE HEADER */
+  .profile-header {
+    background: white; border-radius: 20px; border: 1px solid var(--border);
+    overflow: hidden; margin-bottom: 1.5rem;
+  }
+  .profile-cover {
+    height: 120px;
+    background: linear-gradient(135deg, var(--green) 0%, #0f3d26 60%, var(--ink) 100%);
+    position: relative;
+  }
+  .profile-cover-pattern {
+    position: absolute; inset: 0; opacity: 0.1;
+    background-image: radial-gradient(circle, white 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .profile-body { padding: 0 2rem 2rem; }
+  .profile-avatar-wrap { margin-top: -45px; margin-bottom: 1rem; display: flex; align-items: flex-end; justify-content: space-between; }
+  .profile-avatar {
+    width: 90px; height: 90px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--green-light), var(--green));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800;
+    border: 4px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .verified-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; padding-bottom: 0.5rem; }
+  .v-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.7rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; }
+  .v-badge-green { background: rgba(39,174,96,0.1); color: var(--success); }
+  .v-badge-gold { background: rgba(200,168,75,0.15); color: #8a7020; }
+  .v-badge-blue { background: rgba(52,152,219,0.1); color: #1a6fa0; }
+  .profile-name { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.3rem; }
+  .profile-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.2rem; }
+  .profile-meta { display: flex; gap: 2rem; flex-wrap: wrap; }
+  .meta-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--muted); }
+  .meta-item strong { color: var(--ink); }
+
+  /* CONTENT */
+  .profile-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+  .card { background: white; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+  .card-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; }
+  .card-body { padding: 1.5rem; }
+
+  /* TRUST SCORE BIG */
+  .score-display { text-align: center; padding: 2rem 0; }
+  .score-big { font-family: 'Syne', sans-serif; font-size: 5rem; font-weight: 800; color: var(--green); line-height: 1; }
+  .score-label { font-size: 1rem; color: var(--muted); margin: 0.5rem 0 1rem; }
+  .score-breakdown { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 1.5rem; }
+  .score-factor { display: flex; align-items: center; gap: 0.8rem; }
+  .score-factor-label { width: 140px; font-size: 0.82rem; color: var(--muted); text-align: right; flex-shrink: 0; }
+  .score-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 4px; }
+  .fill-green { background: linear-gradient(90deg, var(--green), var(--green-light)); }
+  .fill-gold { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+  .fill-blue { background: linear-gradient(90deg, #3498db, #5dade2); }
+  .score-factor-val { width: 40px; font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+  .stars-big { color: var(--gold); font-size: 1.3rem; letter-spacing: 0.1em; margin-top: 0.5rem; }
+
+  /* RENTAL HISTORY */
+  .history-item { display: flex; gap: 1rem; padding: 1.2rem 0; border-bottom: 1px solid #f0ede6; position: relative; }
+  .history-item:last-child { border-bottom: none; }
+  .history-line { position: absolute; left: 15px; top: 40px; bottom: -12px; width: 2px; background: var(--border); }
+  .history-item:last-child .history-line { display: none; }
+  .history-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--green); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; flex-shrink: 0; position: relative; z-index: 1; }
+  .history-content { flex: 1; }
+  .history-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
+  .history-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .history-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .h-tag { padding: 0.15rem 0.5rem; border-radius: 50px; font-size: 0.7rem; font-weight: 600; }
+  .h-tag-green { background: rgba(39,174,96,0.1); color: var(--success); }
+  .h-tag-gold { background: rgba(200,168,75,0.12); color: #8a7020; }
+
+  /* PAYMENT STATS */
+  .pay-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; margin-bottom: 1.5rem; }
+  .pay-stat-num { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; }
+  .pay-stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* REVIEWS */
+  .review-item { padding: 1rem 0; border-bottom: 1px solid #f0ede6; }
+  .review-item:last-child { border-bottom: none; }
+  .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+  .reviewer { display: flex; align-items: center; gap: 0.6rem; }
+  .r-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), #8a7020); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 700; }
+  .r-name { font-size: 0.85rem; font-weight: 600; }
+  .r-date { font-size: 0.72rem; color: var(--muted); }
+  .r-stars { color: var(--gold); font-size: 0.8rem; }
+  .r-text { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+  /* SIDEBAR */
+  .side-info { display: flex; flex-direction: column; gap: 1.5rem; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 1px solid #f0ede6; font-size: 0.87rem; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--muted); }
+  .info-val { font-weight: 600; }
+  .download-btn { width: 100%; padding: 0.85rem; background: var(--green); color: white; border: none; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .download-btn:hover { background: var(--green-mid); }
+  .share-btn { width: 100%; padding: 0.75rem; background: transparent; border: 1.5px solid var(--border); color: var(--ink); border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .share-btn:hover { border-color: var(--green); color: var(--green); }
+
+  @media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.5rem; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">Rent<span>Trust</span></div>
+  <a href="tenant-dashboard.html" class="sidebar-link"><span class="sidebar-icon">🏠</span> Dashboard</a>
+  <a href="profile.html" class="sidebar-link active"><span class="sidebar-icon">👤</span> My Profile</a>
+  <a href="#" class="sidebar-link"><span class="sidebar-icon">💳</span> Payments</a>
+  <a href="#" class="sidebar-link"><span class="sidebar-icon">📄</span> Lease</a>
+  <a href="dispute.html" class="sidebar-link"><span class="sidebar-icon">⚖️</span> Disputes</a>
+  <a href="#" class="sidebar-link"><span class="sidebar-icon">🛠</span> Maintenance</a>
+  <a href="#" class="sidebar-link"><span class="sidebar-icon">⚙️</span> Settings</a>
+  <div class="sidebar-bottom">
+    <div class="user-mini">
+      <div class="user-avatar">AW</div>
+      <div>
+        <div class="user-mini-name">Amina Wanjiru</div>
+        <div class="user-mini-role">Tenant · Verified ✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <a href="tenant-dashboard.html" class="back-btn">← Back to Dashboard</a>
+    <div class="topbar-actions">
+      <button class="btn-sm btn-outline">✏️ Edit Profile</button>
+      <button class="btn-sm btn-primary">📄 Download Record</button>
+    </div>
+  </div>
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header">
+    <div class="profile-cover">
+      <div class="profile-cover-pattern"></div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar">AW</div>
+        <div class="verified-badges">
+          <span class="v-badge v-badge-green">✓ ID Verified</span>
+          <span class="v-badge v-badge-gold">⭐ Top Tenant</span>
+          <span class="v-badge v-badge-blue">📱 M-Pesa Linked</span>
+          <span class="v-badge v-badge-green">🏆 Zero Disputes</span>
+        </div>
+      </div>
+      <div class="profile-name">Amina Wanjiru</div>
+      <div class="profile-sub">Tenant · Nairobi, Kenya · Member since January 2022</div>
+      <div class="profile-meta">
+        <div class="meta-item">📍 <strong>Kasarani, Nairobi</strong></div>
+        <div class="meta-item">🏠 <strong>3 Years</strong> rental history</div>
+        <div class="meta-item">💰 <strong>36/36</strong> on-time payments</div>
+        <div class="meta-item">⭐ <strong>4.9/5</strong> landlord rating</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    <div>
+      <!-- RENTAL HISTORY -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Rental History</div>
+          <span style="font-size:0.78rem;color:var(--muted)">Verified by RentTrust</span>
+        </div>
+        <div class="card-body">
+          <div class="history-item">
+            <div class="history-dot">🏠</div>
+            <div class="history-line"></div>
+            <div class="history-content">
+              <div class="history-title">Apt 4B — Kasarani Gardens, Nairobi</div>
+              <div class="history-meta">Jan 2022 – Present · 36 months · Ksh 18,500/mo · Landlord: James Kamau</div>
+              <div class="history-tags">
+                <span class="h-tag h-tag-green">✓ All 36 payments on time</span>
+                <span class="h-tag h-tag-gold">⭐ Rated 5/5 by landlord</span>
+                <span class="h-tag h-tag-green">No disputes</span>
+              </div>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-dot" style="background:var(--muted)">🏠</div>
+            <div class="history-line"></div>
+            <div class="history-content">
+              <div class="history-title">Room 3 — Huruma Estate, Nairobi</div>
+              <div class="history-meta">Aug 2019 – Dec 2021 · 28 months · Ksh 9,000/mo · Landlord: Mary Achieng</div>
+              <div class="history-tags">
+                <span class="h-tag h-tag-green">✓ 27/28 payments on time</span>
+                <span class="h-tag h-tag-gold">⭐ Rated 4.8/5</span>
+                <span class="h-tag h-tag-green">No disputes</span>
+              </div>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-dot" style="background:var(--muted)">🏠</div>
+            <div class="history-content">
+              <div class="history-title">Bedsitter — Pipeline, Embakasi</div>
+              <div class="history-meta">Mar 2018 – Jul 2019 · 16 months · Ksh 6,000/mo · Landlord: John Mwangi</div>
+              <div class="history-tags">
+                <span class="h-tag h-tag-green">✓ All payments on time</span>
+                <span class="h-tag h-tag-gold">⭐ Rated 5/5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYMENT PERFORMANCE -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Payment Performance</div></div>
+        <div class="card-body">
+          <div class="pay-stats">
+            <div>
+              <div class="pay-stat-num" style="color:var(--green)">80</div>
+              <div class="pay-stat-label">Total Payments Made</div>
+            </div>
+            <div>
+              <div class="pay-stat-num" style="color:var(--green)">79</div>
+              <div class="pay-stat-label">On Time</div>
+            </div>
+            <div>
+              <div class="pay-stat-num" style="color:var(--success)">99%</div>
+              <div class="pay-stat-label">On-Time Rate</div>
+            </div>
+          </div>
+          <div style="background:#f0ede6;border-radius:12px;padding:1rem;font-size:0.85rem;color:var(--muted)">
+            📈 Amina's payment streak puts her in the <strong style="color:var(--green)">top 8%</strong> of all RentTrust tenants. Landlords who've rented to her rate her payment reliability <strong style="color:var(--green)">5/5</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Landlord Reviews</div></div>
+        <div class="card-body">
+          <div class="review-item">
+            <div class="review-header">
+              <div class="reviewer">
+                <div class="r-avatar">JK</div>
+                <div><div class="r-name">James Kamau</div><div class="r-date">Dec 2024 · Apt 4B</div></div>
+              </div>
+              <div class="r-stars">★★★★★ 5.0</div>
+            </div>
+            <div class="r-text">Excellent tenant. Always pays before the first. Very respectful of the property and neighbours. Would rent to her again without hesitation.</div>
+          </div>
+          <div class="review-item">
+            <div class="review-header">
+              <div class="reviewer">
+                <div class="r-avatar" style="background:linear-gradient(135deg,#9b59b6,#6c3483)">MA</div>
+                <div><div class="r-name">Mary Achieng</div><div class="r-date">Dec 2021 · Huruma Estate</div></div>
+              </div>
+              <div class="r-stars">★★★★★ 4.8</div>
+            </div>
+            <div class="r-text">Very reliable and clean. One late payment in 28 months — she called ahead to explain and paid within days. Highly recommended.</div>
+          </div>
+          <div class="review-item">
+            <div class="review-header">
+              <div class="reviewer">
+                <div class="r-avatar" style="background:linear-gradient(135deg,#16a085,#0e6655)">JM</div>
+                <div><div class="r-name">John Mwangi</div><div class="r-date">Jul 2019 · Pipeline</div></div>
+              </div>
+              <div class="r-stars">★★★★★ 5.0</div>
+            </div>
+            <div class="r-text">Perfect tenant. Left the bedsitter in better condition than she found it. Would recommend to any landlord.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="side-info">
+      <!-- TRUST SCORE -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Trust Score</div></div>
+        <div class="card-body">
+          <div class="score-display">
+            <div class="score-big">920</div>
+            <div class="stars-big">★★★★★</div>
+            <div class="score-label">Excellent · Top 8%</div>
+          </div>
+          <div class="score-breakdown">
+            <div class="score-factor">
+              <div class="score-factor-label">Payment History</div>
+              <div class="score-bar"><div class="score-fill fill-green" style="width:99%"></div></div>
+              <div class="score-factor-val">99%</div>
+            </div>
+            <div class="score-factor">
+              <div class="score-factor-label">Landlord Ratings</div>
+              <div class="score-bar"><div class="score-fill fill-gold" style="width:98%"></div></div>
+              <div class="score-factor-val">4.9★</div>
+            </div>
+            <div class="score-factor">
+              <div class="score-factor-label">Dispute Record</div>
+              <div class="score-bar"><div class="score-fill fill-green" style="width:100%"></div></div>
+              <div class="score-factor-val">Clean</div>
+            </div>
+            <div class="score-factor">
+              <div class="score-factor-label">Tenure Length</div>
+              <div class="score-bar"><div class="score-fill fill-blue" style="width:85%"></div></div>
+              <div class="score-factor-val">6 yrs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERSONAL INFO -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Profile Details</div></div>
+        <div class="card-body">
+          <div class="info-row"><span class="info-label">Full Name</span><span class="info-val">Amina Wanjiru</span></div>
+          <div class="info-row"><span class="info-label">Phone</span><span class="info-val">+254 7•• ••• 412</span></div>
+          <div class="info-row"><span class="info-label">ID Verified</span><span class="info-val" style="color:var(--success)">✓ Yes</span></div>
+          <div class="info-row"><span class="info-label">M-Pesa Linked</span><span class="info-val" style="color:var(--success)">✓ Yes</span></div>
+          <div class="info-row"><span class="info-label">Location</span><span class="info-val">Nairobi, Kenya</span></div>
+          <div class="info-row"><span class="info-label">Member Since</span><span class="info-val">Jan 2022</span></div>
+          <div class="info-row"><span class="info-label">Profile Views</span><span class="info-val">42 this month</span></div>
+        </div>
+      </div>
+
+      <!-- DOWNLOAD -->
+      <div class="card card-body">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:0.5rem">Official Rental Record</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:1.2rem">Share your verified rental history with prospective landlords or SACCOs.</div>
+        <button class="download-btn">📄 Download PDF Record</button>
+        <button class="share-btn">🔗 Share Profile Link</button>
+        <div style="font-size:0.72rem;color:var(--muted);text-align:center;margin-top:0.8rem">Ksh 200 per official document</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
